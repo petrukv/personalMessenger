@@ -1,18 +1,43 @@
-const onlineStatusSocket = new WebSocket(
+const logged_user = JSON.parse(document.getElementById('json-message-username').textContent)
+
+const onlineStatus = new WebSocket(
     'ws://'
     + window.location.host
     + '/ws/'
     + 'online/'
 );
 
-onlineStatusSocket.onopen = function(e){
+onlineStatus.onopen = function(e){
     console.log("CONNECTED TO online");
+    onlineStatus.send(JSON.stringify({
+        'username': logged_user,
+        'type': 'open'
+    }))
 };
 
-onlineStatusSocket.onerror = function(e){
+onlineStatus.onerror = function(e){
     console.log("ERROR OCCURRED");
 };
 
-onlineStatusSocket.onclose = function(e){
+onlineStatus.onclose = function(e){
     console.log("DISCONNECTED ");
 };
+
+window.addEventListener("beforeunload", function(e){
+    onlineStatus.send(JSON.stringify({
+        'username': logged_user,
+        'type': 'offline'
+    }))
+})
+
+onlineStatus.onmessage = function(e){
+    var data = JSON.parse(e.data)
+    if(data.username != logged_user) {
+        var user_to_change = document.getElementById(`${data.username}_status`)
+        if (data.online_status == true){
+            user_to_change.style.color = 'green'
+        } else {
+            user_to_change.style.color = 'grey'
+        }
+    }
+}

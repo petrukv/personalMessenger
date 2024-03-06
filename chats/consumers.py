@@ -2,8 +2,9 @@ import json
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+from django.contrib.auth.models import User
 
-from chats.models import ChatModel
+from chats.models import ChatModel, UserProfileModel
 
 
 class PersonalChatConsumer(AsyncWebsocketConsumer):
@@ -58,9 +59,9 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
 
 
     @database_sync_to_async
-    def save_message(self, username, message):
+    def save_message(self, username, thread_name, message):
         ChatModel.objects.create(
-            sender=username, message=message, thread_name=self.room_group_name
+            sender=username, message=message, thread_name=thread_name
         )
 
 
@@ -74,6 +75,21 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
+    async def receive(self, text_data=None, bytes_data=None):
+        data = json.loads(text_data)
+        username = data['username']
+        connection_type = data['type']
+        print(connection_type)
+        await self.change_online_status(username, connection_type)
+
+    async def send_onlineStatus(self, event):
+        data = json.loads(event.get('value'))
+        username = data['username']
+        online_status = data['status']
+        await self.send(text_data=json.dumps({
+            'username': username,
+            'online_status': online_status
+        }))
 
     async def disconnect(self, message):
         self.channel_layer.group_discard(
@@ -81,3 +97,14 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+    @database_sync_to_async
+    def change_online_status(self, username, c_type):
+        user = User.objects.get(username=username)
+        userprofile = UserProfileModel.objects.get(user=user)
+        
+        if c_type == 'open':
+            userprofile.online_status = True
+            userprofile.save()
+        else:
+            userprofile.online_status = False
+            userprofile.save()
