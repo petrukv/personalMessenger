@@ -33,11 +33,15 @@ window.addEventListener("beforeunload", function(e){
 onlineStatus.onmessage = function(e){
     var data = JSON.parse(e.data)
     if(data.username != logged_user) {
-        var user_to_change = document.getElementById(`${data.username}_status`)
+        var user_to_change = document.getElementById(`${data.username}_status`);
+        var small_status_to_change = document.getElementById(`${data.username}_small`);
         if (data.online_status == true){
-            user_to_change.style.color = 'green'
+            user_to_change.style.color = 'green';
+            small_status_to_change.textContent = 'Online';
         } else {
-            user_to_change.style.color = 'grey'
+            user_to_change.style.color = 'grey';
+            small_status_to_change.textContent = 'Offline';
+
         }
     }
 }
