@@ -31,8 +31,8 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
         message = data['message']
         username = data['username']
         receiver = data['receiver']
-
-        await self.save_message(username, self.room_group_name, message, receiver)
+        
+        await self.save_message(username, self.room_group_name, message)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -41,6 +41,7 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
                 'username': username,
             }
         )
+
 
     async def chat_message(self, event):
         message = event['message']
