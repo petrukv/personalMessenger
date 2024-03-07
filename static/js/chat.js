@@ -11,7 +11,7 @@ const socket = new WebSocket(
 );
 
 socket.onopen = function(e){
-    console.log("CONNECTION ESTABLISHED");
+    console.log("CONNECTed to chat");
 }
 
 socket.onclose = function(e){
@@ -19,7 +19,7 @@ socket.onclose = function(e){
 }
 
 socket.onerror = function(e){
-    console.log("ERROR OCCURRED");
+    console.log("ERROR");
 }
 
 socket.onmessage = function(e){

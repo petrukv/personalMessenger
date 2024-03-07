@@ -8,7 +8,7 @@ const onlineStatus = new WebSocket(
 );
 
 onlineStatus.onopen = function(e){
-    console.log("CONNECTED TO online");
+    console.log("CONNECTed TO online");
     onlineStatus.send(JSON.stringify({
         'username': logged_user,
         'type': 'open'
@@ -16,11 +16,11 @@ onlineStatus.onopen = function(e){
 };
 
 onlineStatus.onerror = function(e){
-    console.log("ERROR OCCURRED");
+    console.log("error");
 };
 
 onlineStatus.onclose = function(e){
-    console.log("DISCONNECTED ");
+    console.log("disconnected ");
 };
 
 window.addEventListener("beforeunload", function(e){
@@ -41,7 +41,6 @@ onlineStatus.onmessage = function(e){
         } else {
             user_to_change.style.color = 'grey';
             small_status_to_change.textContent = 'Offline';
-
         }
     }
 }

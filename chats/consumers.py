@@ -27,7 +27,6 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
-        print(data)
         message = data['message']
         username = data['username']
         receiver = data['receiver']
@@ -41,7 +40,6 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
                 'username': username,
             }
         )
-
 
     async def chat_message(self, event):
         message = event['message']
@@ -66,6 +64,24 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
         )
 
 
+class NotificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        my_id = self.scope['user'].id
+        self.room_group_name = f'{my_id}'
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        await self.accept()
+
+    async def disconnect(self, code):
+        self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+
+
 class OnlineStatusConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_group_name = 'user'
@@ -80,7 +96,6 @@ class OnlineStatusConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         username = data['username']
         connection_type = data['type']
-        print(connection_type)
         await self.change_online_status(username, connection_type)
 
     async def send_onlineStatus(self, event):

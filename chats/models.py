@@ -19,3 +19,13 @@ class ChatModel(models.Model):
 
     def __str__(self):
         return self.message
+    
+
+class ChatNotification(models.Model):
+    chat = models.ForeignKey(ChatModel, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_seen = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.user.username
+    
