@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
 
-from chats.models import ChatModel, UserProfileModel
+from chats.models import ChatModel, ChatNotification, UserProfileModel
 
 
 class PersonalChatConsumer(AsyncWebsocketConsumer):
@@ -27,11 +27,12 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
+        print(data)
         message = data['message']
         username = data['username']
         receiver = data['receiver']
         
-        await self.save_message(username, self.room_group_name, message)
+        await self.save_message(username, self.room_group_name, message, receiver)
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -58,10 +59,14 @@ class PersonalChatConsumer(AsyncWebsocketConsumer):
 
 
     @database_sync_to_async
-    def save_message(self, username, thread_name, message):
-        ChatModel.objects.create(
+    def save_message(self, username, thread_name, message, receiver):
+        obj = ChatModel.objects.create(
             sender=username, message=message, thread_name=thread_name
         )
+        other_user_id = self.scope['url_route']['kwargs']['id']
+        get_user = User.objects.get(id=other_user_id)
+        if receiver == get_user.username:
+            ChatNotification.objects.create(chat=obj, user=get_user)
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
@@ -80,6 +85,13 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+
+    async def send_notification(self, event):
+        data = json.loads(event.get('value'))
+        count = data['count']
+        await self.send(text_data=json.dumps({
+            'count': count
+        }))
 
 
 class OnlineStatusConsumer(AsyncWebsocketConsumer):
