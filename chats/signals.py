@@ -2,6 +2,7 @@ import json
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -24,7 +25,10 @@ def send_notification(sender, instance, created, **kwargs):
             }
         )
 
-
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfileModel.objects.create(user=instance, name=instance.username)
 
 @receiver(post_save, sender=UserProfileModel)
 def send_onlineStatus(sender, instance, created, **kwargs):
