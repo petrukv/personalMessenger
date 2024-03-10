@@ -1,5 +1,6 @@
 import json
 
+from asgiref.sync import sync_to_async
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
@@ -78,10 +79,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
+        await sync_to_async(ChatNotification.objects.filter(user=my_id).update)(is_seen=True)
         await self.accept()
 
     async def disconnect(self, code):
-        self.channel_layer.group_discard(
+        await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
@@ -92,6 +94,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'count': count
         }))
+        notification_id = data.get('notification_id')
+        if notification_id:
+            notification = await sync_to_async(ChatNotification.objects.get)(pk=notification_id)
+            await sync_to_async(notification.mark_as_seen)()
+
 
 
 class OnlineStatusConsumer(AsyncWebsocketConsumer):

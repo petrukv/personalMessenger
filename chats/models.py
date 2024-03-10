@@ -19,7 +19,7 @@ class ChatModel(models.Model):
 
     def __str__(self):
         return self.message
-    
+
 
 class ChatNotification(models.Model):
     chat = models.ForeignKey(ChatModel, on_delete=models.CASCADE)
@@ -29,3 +29,6 @@ class ChatNotification(models.Model):
     def __str__(self):
         return self.user.username
     
+    def mark_as_seen(self):
+        self.is_seen = True
+        self.save()
