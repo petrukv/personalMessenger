@@ -94,11 +94,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'count': count
         }))
-        notification_id = data.get('notification_id')
-        if notification_id:
-            notification = await sync_to_async(ChatNotification.objects.get)(pk=notification_id)
-            await sync_to_async(notification.mark_as_seen)()
-
 
 
 class OnlineStatusConsumer(AsyncWebsocketConsumer):

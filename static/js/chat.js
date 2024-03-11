@@ -2,16 +2,46 @@ const id = JSON.parse(document.getElementById('json-username').textContent);
 const message_username = JSON.parse(document.getElementById('json-message-username').textContent);
 const receiver = JSON.parse(document.getElementById('json-username-receiver').textContent);
 
+const socket = new WebSocket(
+    'ws://' + window.location.host + '/ws/' + id + '/'
+);
 
-// Прокрутка до найновіших повідомлень
-function scrollToLatestMessage() {
+socket.onopen = function (e) {
+    console.log("CONNECTed to chat");
+};
+
+socket.onclose = function (e) {
+    console.log("CONNECTION LOST");
+};
+
+socket.onerror = function (e) {
+    console.log("ERROR");
+};
+
+socket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
     const chatBody = document.getElementById('chat-body');
     if (chatBody) {
-        chatBody.scrollTop = chatBody.scrollHeight;
+        const newMessage = document.createElement('tr');
+        if (data.username === message_username) {
+            newMessage.innerHTML = `
+                <td>
+                    <p class="bg-success p-2 mt-2 mr-5 shadow-sm text-white float-right rounded">${data.message}</p>
+                </td>
+            `;
+        } else {
+            newMessage.innerHTML = `
+                <td>
+                    <p class="bg-primary p-2 mt-2 mr-5 shadow-sm text-white float-left rounded">${data.message}</p>
+                </td>
+            `;
+        }
+        chatBody.appendChild(newMessage);
+        scrollToLatestMessage();
     }
-}
+};
 
-// Функція для відправки повідомлення на сервер через WebSocket
+// Function to send message via WebSocket
 function sendMessage(message) {
     socket.send(JSON.stringify({
         'message': message,
@@ -20,7 +50,6 @@ function sendMessage(message) {
     }));
 }
 
-// Прослуховування подій клікання по кнопці "Submit"
 document.querySelector('#chat-message-submit').onclick = function (e) {
     const messageInput = document.querySelector('#message_input');
     const message = messageInput.value.trim();
@@ -28,13 +57,12 @@ document.querySelector('#chat-message-submit').onclick = function (e) {
     if (message !== '') {
         sendMessage(message);
         messageInput.value = '';
-
-        // Прокрутка до найновіших повідомлень після надсилання повідомлення
         scrollToLatestMessage();
     }
 };
 
-// Прослуховування подій клавіші "Enter" на полі введення повідомлення
+const messageInput = document.getElementById('message_input');
+
 messageInput.addEventListener('keyup', function (event) {
     if (event.key === 'Enter') {
         event.preventDefault();
@@ -43,104 +71,20 @@ messageInput.addEventListener('keyup', function (event) {
         if (message !== '') {
             sendMessage(message);
             messageInput.value = '';
-
-            // Прокрутка до найновіших повідомлень після надсилання повідомлення
             scrollToLatestMessage();
         }
     }
 });
 
-// Прокрутка до найновіших повідомлень після завантаження сторінки
+// Scroll to latest messages after page load
 window.addEventListener('load', function () {
     scrollToLatestMessage();
 });
 
-// Прокрутка до найновіших повідомлень при отриманні нових повідомлень через WebSocket
-socket.onmessage = function (e) {
-    const data = JSON.parse(e.data);
+// Scroll to latest messages when new messages are received via WebSocket
+function scrollToLatestMessage() {
     const chatBody = document.getElementById('chat-body');
     if (chatBody) {
-        const newMessage = document.createElement('tr');
-        newMessage.innerHTML = `
-            <td>
-                <p class="bg-success p-2 mt-2 mr-5 shadow-sm text-white float-right rounded">${data.message}</p>
-            </td>
-        `;
-        chatBody.appendChild(newMessage);
-
-        // Прокрутка до найновіших повідомлень після отримання нового повідомлення
-        scrollToLatestMessage();
+        chatBody.scrollTop = chatBody.scrollHeight;
     }
-};
-
-
-const socket = new WebSocket(
-    'ws://'
-    + window.location.host
-    + '/ws/'
-    + id
-    + '/'
-);
-
-socket.onopen = function(e){
-    console.log("CONNECTed to chat");
 }
-
-socket.onclose = function(e){
-    console.log("CONNECTION LOST");
-}
-
-socket.onerror = function(e){
-    console.log("ERROR");
-}
-
-socket.onmessage = function(e){
-    const data = JSON.parse(e.data);
-    if(data.username === message_username){
-        document.querySelector('#chat-body').innerHTML += `<tr>
-                                                                <td>
-                                                                <p class="bg-success p-2 mt-2 mr-5 shadow-sm text-white float-right rounded">${data.message}</p>
-                                                                </td>
-                                                            </tr>`;
-    }else{
-        document.querySelector('#chat-body').innerHTML += `<tr>
-                                                                <td>
-                                                                <p class="bg-primary p-2 mt-2 mr-5 shadow-sm text-white float-left rounded">${data.message}</p>
-                                                                </td>
-                                                            </tr>`;
-    }
-};
-
-document.querySelector('#chat-message-submit').onclick = function(e){
-    const message_input = document.querySelector('#message_input');
-    const message = message_input.value;
-
-    socket.send(JSON.stringify({
-        'message':message,
-        'username':message_username,
-        'receiver':receiver
-    }));
-
-    message_input.value = '';
-};
-
-const messageInput = document.getElementById('message_input');
-
-messageInput.addEventListener('keyup', function(event) {
-    if (event.key === 'Enter') {
-        
-        event.preventDefault();
-        
-        const message = messageInput.value.trim();
-
-        if(message !== ''){
-            socket.send(JSON.stringify({
-                'message' : message,
-                'username' : message_username,
-                'receiver':receiver
-            }));
-
-            messageInput.value = '';
-        }
-    }
-});
