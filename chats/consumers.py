@@ -79,7 +79,6 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-        await sync_to_async(ChatNotification.objects.filter(user=my_id).update)(is_seen=True)
         await self.accept()
 
     async def disconnect(self, code):

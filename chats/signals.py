@@ -26,7 +26,6 @@ def send_notification(sender, instance, created, **kwargs):
             }
         )
         
-        ChatNotification.objects.filter(user=instance.user).exclude(id=instance.id).update(is_seen=True)
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):

@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 
 from chats.models import ChatModel, ChatNotification
 
@@ -12,21 +12,22 @@ def index(request):
 
 
 def chatPage(request, username):
-    user_obj = User.objects.get(username=username)
-    current_user = request.user
-    users = User.objects.exclude(username=current_user.username)
+    user_obj = get_object_or_404(User, username=username)
+    users = User.objects.exclude(username=request.user.username)
 
-    if current_user.id > user_obj.id:
-        thread_name = f'chat_{current_user.id}-{user_obj.id}'
+    # Determine the thread name
+    if request.user.id > user_obj.id:
+        thread_name = f'chat_{request.user.id}-{user_obj.id}'
     else:
-        thread_name = f'chat_{user_obj.id}-{current_user.id}'
+        thread_name = f'chat_{user_obj.id}-{request.user.id}'
 
+    # Fetch messages for the thread
     message_objs = ChatModel.objects.filter(thread_name=thread_name)
 
-    notifications = ChatNotification.objects.filter(user=current_user, chat__thread_name=thread_name)
-    for notification in notifications:
-        sender = notification.chat.sender
-        if sender == user_obj.username:
-            notification.mark_as_seen()
+    unread_messages = ChatNotification.objects.filter(user=request.user, chat__sender=username, is_seen=False)
+    print(unread_messages)
+
+    for unread_message in unread_messages:
+        unread_message.mark_as_seen()
 
     return render(request, 'main_chat.html', context={'user': user_obj, 'users': users, 'messages': message_objs})
