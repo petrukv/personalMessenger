@@ -8,6 +8,7 @@ const socket = new WebSocket(
 
 socket.onopen = function (e) {
     console.log("CONNECTed to chat");
+    scrollToLatestMessage()
 };
 
 socket.onclose = function (e) {
@@ -41,7 +42,7 @@ socket.onmessage = function (e) {
     }
 };
 
-// Function to send message via WebSocket
+
 function sendMessage(message) {
     socket.send(JSON.stringify({
         'message': message,
@@ -76,15 +77,7 @@ messageInput.addEventListener('keyup', function (event) {
     }
 });
 
-// Scroll to latest messages after page load
-window.addEventListener('load', function () {
-    scrollToLatestMessage();
-});
-
-// Scroll to latest messages when new messages are received via WebSocket
 function scrollToLatestMessage() {
-    const chatBody = document.getElementById('chat-body');
-    if (chatBody) {
-        chatBody.scrollTop = chatBody.scrollHeight;
-    }
+    const latestMessage = document.getElementById('latest-message');
+    latestMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
